@@ -1,0 +1,137 @@
+<html><head>
+  <link href="https://fonts.googleapis.com/css?family=Source Sans Pro" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R642IMG</title>
+    <link href="/style.css" rel="stylesheet" type="text/css" media="all">
+    <style>
+    body {
+    font-family: 'Source Sans Pro';font-size: 22px;
+}
+
+h1 {
+  text-shadow: 0px 3px #000000;
+}
+b{
+  text-shadow: 0px 2px #000000;
+}
+h2   {
+  text-shadow: 0px 3px #000000;
+}
+
+    .center {
+text-align: center; <!-- i dont get this. -->
+}
+  b {
+  color: white;
+  text-align: center;
+}
+  h1 {
+  color: white;
+}
+  a {
+  color: white;
+}
+  h2 {
+  color: white;
+}
+
+
+</style>
+</head><body style="background:url('background.png');">
+
+  
+<b>Scale: <input id="scale" value="1"></b>
+
+<b>If your image clips in the level editor, it is because the level code is too big for the game (16,384 chars max, a normal image when converted is usually more than that)<br>
+<b>This works by iterating through every pixel in the image, and turning it into a 1x1 lab block in the same position with the same color.</b>
+<b></b>Image: <input type="file" id="image"></b>
+<b>Selected image:<b>
+<div id="preview"></div>
+<script>
+// stolen from mozilla js docs
+preview = document.getElementById("preview")
+input = document.getElementById("image")
+const fileTypes = [
+  "image/jpeg",
+  "image/png",
+  "image/tiff",
+  "image/webp"
+];
+
+function validFileType(file) {
+  return fileTypes.includes(file.type);
+}
+function returnFileSize(number) {
+  if(number < 1024) {
+    return "this is a really small image"
+  } else if(number >= 1024 && number < 1048576) {
+    return "decently sized image"
+  } else if(number >= 1048576) {
+    return "alrighty"
+  } else if(number >= (1048576*1024)) {
+    return "how did you get it over a gigabyte"
+  }
+}
+function updateImageDisplay() {
+  while(preview.firstChild) {
+    preview.removeChild(preview.firstChild);
+  }
+
+  const curFiles = input.files;
+  if(curFiles.length === 0) {
+    const para = document.createElement('p');
+    para.textContent = 'No files currently selected for upload';
+    preview.appendChild(para);
+  } else {
+    const list = document.createElement('ol');
+    preview.appendChild(list);
+
+    for(const file of curFiles) {
+      const para = document.createElement('p');
+      if(validFileType(file)) {
+        para.textContent = returnFileSize();
+        const image = document.createElement("img")
+        image.src = URL.createObjectURL(file);
+
+        preview.appendChild(image);
+        preview.appendChild(para);
+      } else {
+        para.textContent = `thats not an image you idiot`;
+        preview.appendChild(para);
+      }
+    }
+  }
+}
+function toR64b64(numb) {
+	var letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+	letters = letters.split("");
+	return letters[(Math.floor(numb/64)%64)] + letters[((Math.floor(numb)%4096)%64)]
+}
+input.addEventListener('change', updateImageDisplay);
+function imgtolevel() {
+	ctx = document.getElementById("imagecanv").getContext("2d");
+	document.getElementById("imagecanv").width = document.getElementById("preview").children[1].offsetWidth*(1*document.getElementById("scale").value);
+	document.getElementById("imagecanv").height = document.getElementById("preview").children[1].offsetHeight*(1*document.getElementById("scale").value);
+	ctx.drawImage(document.getElementById("preview").children[1], 0, 0, document.getElementById("imagecanv").width, document.getElementById("imagecanv").height)
+	level = "~B-AAgBgAf9ABAAAAAAA https://www.3dgrblx.com/scripts/robot64/img2r64 -AAgBgAf9ACAAAAAAA-"
+	for (v=0;v<document.getElementById("imagecanv").width;v++) {
+		for (i=0;i<document.getElementById("imagecanv").height;i++) {
+			imgcolor = ctx.getImageData((v*-1)+document.getElementById("imagecanv").width-1, i, 1, 1).data
+			if (imgcolor[3] == 255) {
+				level += "AM" + toR64b64(v+2048) + "f/" + toR64b64((i*-1)+2048) + "ABABABAAA"+toR64b64(imgcolor[0])+toR64b64(imgcolor[1])+toR64b64(imgcolor[2])+"-"
+			}
+		}
+	}
+	document.getElementById("levelcode").innerText = level;
+	return level;
+}
+</script>
+<button id="turnintolevel" onclick="imgtolevel()">Turn into level</button>
+<div style="background-color:lightgray;outline:2px dashed black;">
+<canvas id="imagecanv"></canvas>
+<p id="levelcode" style="background-color:white;outline:2px solid black;margin:8px;padding:8px;">Level code</p>
+<div style="height:4px"></div>
+</div>
+
+</b></b></body></html>
